@@ -284,7 +284,8 @@ def display_impact_vs_giving_chart(df):
             selected_industries = st.multiselect(
                 "Filter by Industry:", 
                 options=["All Industries"] + list(industries),
-                default=["All Industries"]
+                default=["All Industries"],
+                key="impact_vs_giving_industry_filter"  # Add this line
             )
             
             if "All Industries" not in selected_industries and selected_industries:
@@ -551,8 +552,9 @@ def display_loss_contingencies_chart(df):
     if len(filtered_df) == 0:
         st.info("Not enough data available for this visualization.")
         return
+
     
-    # Create filter section in expander
+ # Create filter section in expander
     with st.expander("Filter Data", expanded=False):
         # Allow filtering by industry
         if industry_col:
@@ -560,7 +562,8 @@ def display_loss_contingencies_chart(df):
             selected_industries = st.multiselect(
                 "Filter by Industry:", 
                 options=["All Industries"] + list(industries),
-                default=["All Industries"]
+                default=["All Industries"],
+                key="loss_contingencies_industry_filter"  # Add this unique key
             )
             
             if "All Industries" not in selected_industries and selected_industries:
@@ -749,7 +752,7 @@ def display_loss_contingencies_chart(df):
             )
             
             fig.update_traces(texttemplate='%{text} companies', textposition='outside')
-            
+    
             st.plotly_chart(fig, use_container_width=True)
             
             for _, row in industry_ratios.head(3).iterrows():
@@ -780,15 +783,16 @@ def display_environmental_incidents_map(df):
         
         # Check if we have location data
         has_coords = all(col in companies_with_incidents.columns for col in ['latitude', 'longitude'])
-        
+
+        # Define industry_col outside the if block so it's accessible throughout the function
+        industry_col = None
+        for col in ['industry', 'Industry', 'Standard Industrial Classification (SIC)', 'SIC']:
+            if col in companies_with_incidents.columns:
+                industry_col = col
+                break
+
         if not has_coords:
             # Create a simple bar chart of incident counts by industry
-            industry_col = None
-            for col in ['industry', 'Industry', 'Standard Industrial Classification (SIC)', 'SIC']:
-                if col in companies_with_incidents.columns:
-                    industry_col = col
-                    break
-            
             if industry_col:
                 incident_by_industry = companies_with_incidents.groupby(industry_col)['incident_count'].sum().reset_index()
                 incident_by_industry = incident_by_industry.sort_values('incident_count', ascending=False)
@@ -808,6 +812,7 @@ def display_environmental_incidents_map(df):
                 st.metric("Total Environmental Incidents", f"{companies_with_incidents['incident_count'].sum():.0f}")
                 st.info("Detailed incident location and industry data not available.")
             return
+
         
         # If we have coordinates, create a map
         name_col = 'company_name' if 'company_name' in companies_with_incidents.columns else 'Name'
@@ -847,7 +852,8 @@ def display_environmental_incidents_map(df):
                 selected_types = st.multiselect(
                     "Filter by Incident Type:",
                     options=["All Types"] + incident_types,
-                    default=["All Types"]
+                    default=["All Types"],
+                    key="incident_type_filter"  # Add this line
                 )
                 
                 if "All Types" not in selected_types and selected_types:

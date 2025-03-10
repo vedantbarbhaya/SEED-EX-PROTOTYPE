@@ -3,7 +3,7 @@ modules/corporate_players.py
 Implements the first part of the narrative: "Who are the corporate players?"
 More structured implementation based on the dashboard visualization suggestions
 """
-import folium # type: ignore
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -237,15 +237,47 @@ def display_geographic_section(df, geo_df=None):
         col1, col2 = st.columns([3, 2])
         
         with col1:
-            # Create a state-level choropleth map
-            fig = create_choropleth(
+            # Create a state-level choropleth map using Plotly Express
+            fig = px.choropleth(
                 geo_df,
-                location_col='state_abbr',
-                value_col='env_giving_millions',
-                title='Environmental Giving by State ($M)',
-                hover_data=['num_companies', 'avg_giving_per_company', 'giving_pct_of_revenue'] 
-                if 'giving_pct_of_revenue' in geo_df.columns else None
+                locations='state_abbr',
+                locationmode="USA-states",
+                color='env_giving_millions',
+                scope="usa",
+                color_continuous_scale="Blues",  # More appealing color scale
+                hover_name='state_name',
+                hover_data={
+                    'state_abbr': False,
+                    'env_giving_millions': ':.1f',
+                    'num_companies': True,
+                    'avg_giving_per_company': ':.2f',
+                },
+                labels={
+                    'env_giving_millions': 'Environmental Giving ($M)',
+                    'num_companies': 'Number of Companies',
+                    'avg_giving_per_company': 'Avg. Giving per Company ($M)'
+                },
+                title='Environmental Giving by State ($M)'
             )
+            
+            # Improve the map styling
+            fig.update_layout(
+                geo=dict(
+                    showcoastlines=True, coastlinecolor="Black",
+                    showland=True, landcolor="lightgray",
+                    showlakes=True, lakecolor="LightBlue",
+                    showrivers=True, rivercolor="LightBlue",
+                    showsubunits=True, subunitcolor="Black"
+                ),
+                margin=dict(l=0, r=0, t=30, b=0),
+                coloraxis_colorbar=dict(
+                    title="Giving ($M)",
+                    thicknessmode="pixels", thickness=20,
+                    lenmode="pixels", len=300,
+                    ticks="outside"
+                )
+            )
+            
             st.plotly_chart(fig, use_container_width=True)
         
         with col2:
